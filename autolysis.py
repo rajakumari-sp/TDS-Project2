@@ -93,12 +93,16 @@ def analyze_df(df):
     # Calculate the percentage of missing values in each column
     missing_percentages = (missing_values / num_rows) * 100
 
+    #calculate unique values in each categorical column and add in return statement
+    categorical_columns = df.select_dtypes(include=['object', 'category']).columns
+    unique_values_per_column = {col: df[col].nunique() for col in categorical_columns}
 
     # Store the analysis results in a dictionary
     results = {
         "rows": num_rows,
         "columns": num_cols,
-        "percentage_missing_values": missing_percentages.to_dict()  # Convert to dictionary
+        "percentage_missing_values": missing_percentages.to_dict(),  # Convert to dictionary
+        "unique_values_per_column": unique_values_per_column  # Convert to dictionary
         }
     print(results)
     return results
@@ -594,10 +598,20 @@ def generate_report(df, numeric_columns, file_path, response_json):
 
     # 3. Generate README.md from OpenAI response JSON
     try:
-        readme_content = response_json['choices'][0]['message']['content']
+        markdown_content = response_json['choices'][0]['message']['content']
         readme_path = os.path.join(folder_path, 'README.md')
+        # Add image to README.md
+        markdown_content = markdown_content.replace("```mardown","")
+        markdown_content = markdown_content.replace("```", "")
+        with open("heatmap.png", "rb") as image_file:
+          encoded_string = base64.b64encode(image_file.read()).decode()
+          markdown_content = markdown_content.replace("heatmap.png", f"data:image/png;base64,{encoded_string}")
+        with open("clusters_2d.png", "rb") as image_file:
+          encoded_string = base64.b64encode(image_file.read()).decode()
+          markdown_content = markdown_content.replace("clusters_2d.png", f"data:image/png;base64,{encoded_string}")
+
         with open(readme_path, 'w') as f:
-            f.write(readme_content)
+            f.write(markdown_content)
     except (KeyError, IndexError) as e:
         print(f"Error extracting README content from JSON: {e}")
         print("Using default README content.")
@@ -722,20 +736,19 @@ if match:
   print(f"Optimal k: {optimal_k}")
 clustered_df = identify_clusters(X_scaled_selected_df,optimal_k )
 generate_cluster_map(clustered_df)
+
 prompt = f"""
-Generate a README.md file that summarizes the data, analysis, and key findings from below data. The README.md should include a brief overview of the data, a description of the analysis performed (including clustering and PCA), and a summary of the key insights. Include the cluster image and correlation heatmap in the README.md file.
-**Filename: {file_path}
-**dataframe header: {df.head()}
-**Column Information: {column_info}
-**Summary Statistics: {summary_stats}
-**Outlier Percentages: {outlier_percentages}
-**Correlation Matrix: {corr_mat}
-**Cluster Image path(2D): {'./clusters_2d.png'}
-**Chi2 test results: {chi2_feature_results}
-Analyze the data and identify any significant findings or insights.
+Generate a README.md that has analysis of data. It should have heading ```Data Analysis Report for file name: {file_path}.
+1st header should be 'Introduction' which should include objectives like: basic information about the data, and what could be modeled from the data.
+2nd header should be 'Dataset Overview'. This should include Filename,number of samples, number of features. this information can be got from filename:{file_path} and data info:{df_info}.
+3rd header should be 'Data Description'. This should include each column with data type, number of uniqe values, percentage of missing values and description of each feature as a table. This can be got from data info, column_info:{column_info} and summary_stats:{summary_stats}.
+4th header should be 'Data Quality'. This should have give the columns having significant missing values and significant percent of outlier. percentage of outliers can be got from outlier_percentage:{outlier_percentages}.  Give the inference from chi2 test from chi2_feature_results:{chi2_feature_results}.
+5th header should be 'Data Visualization'. Here show the image cluster: clusters_2d.png and correlation heatmap: heatmap.png
+7th header should be 'Data Processing Steps'. Here explain that Data processing steps like Imputations, onehotencoding, ordinal encoding, scaling and PCA has been used.
+8th header should be 'Key Insights and Next Steps'. Here write your key insights and next steps and suggestions.
 """
 
 # Send the prompt to the LLM (using your preferred method, e.g., get_LLMResponse)
 response = get_LLMResponse(prompt)
-print(json.dumps(response.json(), indent=4))
+#print(json.dumps(response.json(), indent=4))
 generate_report(df, numeric_columns, file_path, response.json())
