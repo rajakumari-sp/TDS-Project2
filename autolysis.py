@@ -22,8 +22,6 @@ import matplotlib.pyplot as plt
 import openai
 import requests
 import chardet
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.decomposition import PCA
@@ -78,7 +76,7 @@ def read_csv(file_path):
 # Check the number of rows, columns and missing values
 def analyze_df(df):
   """
-   Gets dataframe, analyzes its rows, columns, and missing values.
+   Gets dataframe, analyzes its rows, columns, unique values and missing values.
   Args:
     df: dataframe to analyze.
   Returns:
@@ -95,7 +93,7 @@ def analyze_df(df):
     # Calculate the percentage of missing values in each column
     missing_percentages = (missing_values / num_rows) * 100
 
-    #calculate unique values in each categorical column and add in return statement
+    #calculate unique values in each categorical column
     categorical_columns = df.select_dtypes(include=['object', 'category']).columns
     unique_values_per_column = {col: df[col].nunique() for col in categorical_columns}
 
@@ -103,8 +101,8 @@ def analyze_df(df):
     results = {
         "rows": num_rows,
         "columns": num_cols,
-        "percentage_missing_values": missing_percentages.to_dict(),  # Convert to dictionary
-        "unique_values_per_column": unique_values_per_column  # Convert to dictionary
+        "percentage_missing_values": missing_percentages.to_dict(),
+        "unique_values_per_column": unique_values_per_column 
         }
     print(results)
     return results
@@ -197,7 +195,7 @@ def generate_correlation_heatmap(df, title="Correlation Heatmap"):
   # Calculate the correlation matrix
   correlation_matrix = numerical_df.corr()
   # Create the heatmap using seaborn
-  plt.figure(figsize=(10, 8))  # Adjust figure size as needed
+  plt.figure(figsize=(10, 8)) 
   sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt=".2f")
   plt.title(title)
   plt.savefig('heatmap.png', dpi=64)
@@ -217,7 +215,6 @@ def get_LLMResponse(prompt):
     response from LLM
   """
   AIPROXY_TOKEN = os.getenv('AIPROXY_TOKEN')
-  #AIPROXY_TOKEN = userdata.get('AIPROXY_TOKEN')
   API_URL = 'https://aiproxy.sanand.workers.dev/openai/v1/chat/completions'
 
   headers = {
@@ -248,7 +245,6 @@ def get_LLMResponseForImage(Image, prompt):
     response from LLM
   """
   AIPROXY_TOKEN = os.getenv('AIPROXY_TOKEN')
-  #AIPROXY_TOKEN = userdata.get('AIPROXY_TOKEN')
   API_URL = 'https://aiproxy.sanand.workers.dev/openai/v1/chat/completions'
 
   # Read the image file as binary data
@@ -316,7 +312,7 @@ def get_LLMResponseForFeatures(df, column_info, summary_stats):
     {{ "drop_features": ["feature1", "feature2", ...], "onehot_features": ["feature3", "feature4", ...], "ordinal_features": ["feature5", "feature6", ...]}}
     """
 
-    # Send the prompt to the LLM (using your preferred method, e.g., get_LLMResponse)
+    # Send the prompt to the LLM
     response = get_LLMResponse(prompt)
 
     if response.status_code == 200:
@@ -360,7 +356,7 @@ def generate_elbow_chart(X_scaled, k_range=(1, 11), filename="elbow_chart.png"):
         k_range: Range of k values to consider.
         filename: Name of the file to save the image (default: "elbow_chart.png").
     """
-    wcss = []  # Within-cluster sum of squares
+    wcss = [] 
 
     for k in range(k_range[0], k_range[1]):
         kmeans = KMeans(n_clusters=k, random_state=42)
@@ -368,12 +364,12 @@ def generate_elbow_chart(X_scaled, k_range=(1, 11), filename="elbow_chart.png"):
         wcss.append(kmeans.inertia_)
 
     # Plot the elbow method
-    plt.figure(figsize=(8, 8))  # Adjust figure size for desired aspect ratio
+    plt.figure(figsize=(8, 8)) 
     plt.plot(range(k_range[0], k_range[1]), wcss, marker='o')
     plt.title('Elbow Method for Optimal k')
     plt.xlabel('Number of Clusters (k)')
     plt.ylabel('WCSS')
-    plt.savefig(filename, dpi=64, bbox_inches='tight', pad_inches=0.5)  # Adjust dpi and padding as needed
+    plt.savefig(filename, dpi=64, bbox_inches='tight', pad_inches=0.5) 
     plt.show()
 
 # Identify Clusters in the given dataset
@@ -413,10 +409,6 @@ def apply_pca_with_variance(X_scaled, variance_threshold=0.90):
     # Find the number of components explaining the desired variance
     n_components = len(cumulative_variance[cumulative_variance <= variance_threshold]) + 1
 
-    # if n_components == len(cumulative_variance) + 1: # if n_components is greater than or equal to maximum components required to explain the desired variance, then we will set n_componenets to a number to prevent error
-    #     n_components = len(cumulative_variance)
-    # print(f"Number of components explaining {variance_threshold*100:.2f}% variance: {n_components}")
-
     # Apply PCA with the determined number of components
     pca = PCA(n_components=n_components)
     X_pca = pca.fit_transform(X_scaled)
@@ -448,10 +440,10 @@ def preprocess_data(df_data, numeric_features, categorical_features):
     # 2. Impute and encode categorical features
     cat_imputer = SimpleImputer(strategy='most_frequent')  # Impute with most frequent value
     df_data[categorical_features] = cat_imputer.fit_transform(df_data[categorical_features])
-    # if No. of unique values in a column is more than 20, then drop the column
+    # if No. of unique values in a column is more than 50, then drop the column
     for col in df_data[categorical_features]:
-      if df_data[col].nunique() > 20:
-        print(f"Dropping column '{col}' due to more than 20 unique values.")
+      if df_data[col].nunique() > 50:
+        print(f"Dropping column '{col}' due to more than 50 unique values.")
         df_data = df_data.drop(columns=[col])
     categorical_features = [col for col in categorical_features if col in df_data.columns]
     encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')  # One-hot encoding
@@ -511,11 +503,11 @@ def encodeWithOneHotEncoder(df, onehot_features):
         DataFrame with encoded and imputed features.
     """
     # Impute missing values before one-hot encoding
-    cat_imputer = SimpleImputer(strategy='most_frequent')  # You can change the strategy
+    cat_imputer = SimpleImputer(strategy='most_frequent') 
     df[onehot_features] = cat_imputer.fit_transform(df[onehot_features])
     for col in df[onehot_features]:
       if df[col].nunique() > 50:
-        print(f"Dropping column '{col}' due to more than 30 unique values.")
+        print(f"Dropping column '{col}' due to more than 50 unique values.")
         df = df.drop(columns=[col])
     onehot_features = [col for col in onehot_features if col in df.columns]
     encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
@@ -537,9 +529,6 @@ def encodeWithOridinalEncoder(df, ordinal_features):
     Returns:
         DataFrame with encoded and imputed features.
     """
-    # Impute missing values before one-hot encoding
-    cat_imputer = SimpleImputer(strategy='most_frequent')  # You can change the strategy
-    df[ordinal_features] = cat_imputer.fit_transform(df[ordinal_features])
     # Impute missing values before ordinal encoding
     ord_imputer = SimpleImputer(strategy='most_frequent')  # You can change the strategy
     df[ordinal_features] = ord_imputer.fit_transform(df[ordinal_features])
@@ -578,11 +567,10 @@ def chi2_test_for_features(df, categorical_features):
                     "chi2_statistic": chi2_stat,
                     "p_value": p_value,
                     "degrees_of_freedom": dof,
-                   # "expected_frequencies": expected
                 }
     return results
 
-"""# Generate cluster map in 2D"""
+"""# Apply PCA to reduce dimensionality to 2 and generate cluster map"""
 
 # Apply PCA to reduce dimensionality to 2 and generate cluster map
 def generate_cluster_map(X_scaled):
@@ -670,7 +658,6 @@ def generate_report(df, numeric_columns, file_path, response_json):
     except (KeyError, IndexError) as e:
         print(f"Error extracting README content from JSON: {e}")
         print("Using default README content.")
-        # ... (add your default README content here) ...
 
     print(f"Report generated in folder: {folder_path}")
 
@@ -713,7 +700,6 @@ if __name__ == "__main__":
   if df is None:
       exit(1)
   descriptive_stats = get_descriptive_stats(df)
-  #print(descriptive_stats)
   df_info = analyze_df(df)
   numeric_columns, categorical_columns = get_column_types(df)
   corr_mat = generate_correlation_heatmap(df)
@@ -748,22 +734,15 @@ if __name__ == "__main__":
   onehot_features = content.get("onehot_features", [])
   if onehot_features:
     df_new = encodeWithOneHotEncoder(df_new, onehot_features)
-  else:
-    df_new = df_new
   ordinal_features = content.get("ordinal_features", [])
   if ordinal_features:
     df_new = encodeWithOridinalEncoder(df_new, ordinal_features)
-  else:
-    df_new = df_new
   # get categorical features from df
   cat_features = [col for col in df_new.columns if df_new[col].dtype == 'object']
   if cat_features:
     df_new = encodeWithOneHotEncoder(df_new, cat_features)
-  else:
-    df_new = df_new
   df_new_scaled = imputeAndScale_NumericFeatures(df_new, numeric_columns)
   # perform chi2 test if df_new_min has more than 1 categorical features
-
   categorical_columns = [col for col in df_new_min.columns if df_new_min[col].dtype == 'object']
   if len(categorical_columns) > 1:
     chi2_feature_results = chi2_test_for_features(df_new_min, categorical_columns)
@@ -778,7 +757,6 @@ if __name__ == "__main__":
   response = get_LLMResponseForImage('elbow_chart.png', prompt)
   # Extract the content from the response
   content = response.json()['choices'][0]['message']['content']
-
   # Use a regular expression to find the integer value of k
   match = re.search(r'\d+', content)
   # Let the optimal k value be 3 by default
