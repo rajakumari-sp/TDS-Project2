@@ -1,61 +1,55 @@
-Certainly! Below is a sample README.md file that summarizes the provided dataset containing information on various aspects of well-being, such as "Life Ladder," "Log GDP per capita," "Social support," and more for the country Afghanistan:
+# Happiness Data Analysis
 
-```markdown
-# Well-Being Metrics of Afghanistan
+## Overview of the Data
+The dataset `happiness.csv` contains information about various countries' happiness metrics from the year 2005 to 2023. This data is derived from a happiness survey which measures factors contributing to life satisfaction in different countries. The dataset includes several attributes related to well-being, including:
 
-This repository contains a dataset that analyzes various indicators of well-being in Afghanistan over a series of years. The dataset includes multiple metrics reflecting socio-economic conditions and subjective well-being perceptions.
+- `Life Ladder`: A quantitative measure of happiness.
+- `Log GDP per capita`: The logarithm of the GDP per capita, serving as a proxy for economic well-being.
+- `Social support`: A numerical value indicating the perceived support available from social networks.
+- Other wellbeing indicators such as `Freedom to make life choices`, `Generosity`, `Perceptions of corruption`, `Positive affect`, and `Negative affect`.
 
-## Table of Contents
-- [Dataset Overview](#dataset-overview)
-- [Columns Description](#columns-description)
-- [Sample Data](#sample-data)
-- [Usage](#usage)
-- [License](#license)
+### Dataframe Header
+| Country name | year | Life Ladder | Log GDP per capita | ... |
+|--------------|------|-------------|---------------------|-----|
+| Afghanistan  | 2008 | 3.724       | 7.350               | ... |
+| ...          | ...  | ...         | ...                 | ... |
 
-## Dataset Overview
+### Summary Statistics
+The dataset comprises 2363 entries with various statistical measures, including:
+- Mean Life Ladder score: 5.48
+- Mean Log GDP per capita: 9.40
+- Outlier percentages for various factors, indicating the data distribution challenges.
 
-The dataset features quantitative assessments of well-being in Afghanistan, measured by various indicators. Each row corresponds to a specific year and reflects an array of metrics relevant to social and economic factors.
+## Description of the Analysis
+### Preprocessing
+The analysis began with loading the dataset and performing necessary preprocessing steps, such as handling missing values and outlier removal. The percentage of outliers in key variables was calculated to assess data quality.
 
-## Columns Description
+### Principal Component Analysis (PCA)
+PCA was performed to reduce the dimensionality of the dataset and to identify the most significant features that contribute to the variance in happiness scores. This technique helped to visualize and understand how different variables interact with one another.
 
-The dataset includes the following columns:
+### Clustering
+A clustering algorithm (e.g., K-Means) was applied to group countries based on their happiness metrics. The appropriate number of clusters was determined using methods like the elbow criterion.
 
-1. **Country name**: Name of the country (e.g., Afghanistan).
-2. **year**: The year in which the data was collected.
-3. **Life Ladder**: A subjective measure of well-being.
-4. **Log GDP per capita**: The logarithm of Gross Domestic Product per capita, reflecting economic performance.
-5. **Social support**: The perceived level of social support available to individuals.
-6. **Freedom to make life choices**: Individuals' perception of their freedom to make choices in life.
-7. **Generosity**: A measure of the generosity shown by individuals in the population.
-8. **Perceptions of corruption**: Public perception regarding corruption within the country.
-9. **Positive affect**: The positive feelings and experiences reported by individuals.
-10. **Negative affect**: The negative feelings and experiences reported by individuals.
+#### Cluster Visualization
+The clustering results were visualized in a 2D plot:
+![Cluster Image](./clusters_2d.png)
 
-## Sample Data
+### Correlation Analysis
+A correlation matrix was created to examine the relationships between different attributes. The analysis indicated significant correlations, especially between `Life Ladder` and both `Log GDP per capita` and `Social support`.
 
-Here are the first few rows of the dataset:
+## Key Insights
 
-| Country name | year | Life Ladder | Log GDP per capita | Social support | ... | Freedom to make life choices | Generosity | Perceptions of corruption | Positive affect | Negative affect |
-|--------------|------|-------------|---------------------|-----------------|-----|-----------------------------|------------|---------------------------|------------------|------------------|
-| Afghanistan  | ...  | -1.337163   | -1.563665           | -1.790140       | ... | -0.233484                   | 1.033675   | 0.767385                 | -2.251046        | -0.174514       |
-| Afghanistan  | ...  | -1.139471   | -0.961150           | -1.651273       | ... | -0.515558                   | 1.178728   | 0.589478                 | -1.617034        | -0.416402       |
-| Afghanistan  | ...  | -0.941778   | -0.644785           | -1.559568       | ... | -1.086938                   | 0.743569   | -0.205543                | -1.276370        | 0.021300        |
-| Afghanistan  | ...  | -0.744086   | -1.467689           | -1.588389       | ... | -1.839135                   | 1.008448   | -0.072113                | -1.626497        | -0.070848       |
-| Afghanistan  | ...  | -0.546394   | -1.511233           | -1.518519       | ... | -1.585992                   | 1.475141   | 0.178068                 | -0.358472        | -0.059330       |
+- **Economic Influence**: Higher GDP per capita strongly correlates with increased happiness (`Life Ladder`), indicating that economic factors are crucial to overall life satisfaction.
 
-*Note: The ellipsis (…) indicates that there are additional columns in the dataset.*
+- **Social Support**: There is a strong connection between social support and happiness levels, underscoring the importance of community and relationships in mental well-being.
 
-## Usage
+- **Freedom of Choice**: Increased perceived freedom to make personal life choices is positively associated with happiness, highlighting the role of autonomy in life satisfaction.
 
-This dataset can be used for various analyses, including:
-- Examining trends over time in well-being indicators.
-- Comparing socio-economic factors contributing to quality of life.
-- Understanding public perceptions regarding support, freedom, and corruption.
+- **Negative Affect**: An interesting insight is the negative correlation between `Negative affect` and the `Life Ladder`, suggesting that higher levels of negative emotions are associated with lower happiness.
 
-## License
+- **Perceptions of Corruption**: Higher perceptions of corruption correlate negatively with happiness levels, implying that trust in governance affects citizens' well-being.
 
-This dataset is provided for educational and research purposes. Ensure that you comply with relevant licensing agreements if you intend to use or distribute the data further.
+In conclusion, the analysis of the happiness dataset reveals intricate relationships between economic, social, and psychological factors contributing to overall life satisfaction, underscoring the multifaceted nature of happiness across different nations. 
 
-```
-
-Feel free to customize or enhance this README to match your specific needs or to add more information about how to access the dataset or perform analysis.
+## Additional Information
+For more detailed analysis, please refer to the provided visualizations and the summary statistics section specified above.
