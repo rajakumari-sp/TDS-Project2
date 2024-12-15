@@ -1,56 +1,41 @@
-# Book Data Summary
+```markdown
+# Goodreads Data Analysis
 
 ## Overview
+This repository contains an analysis of a dataset derived from Goodreads, which details various attributes of books, including ratings, authors, publication year, and more. The dataset comprises 10,000 entries with numerous features that provide insight into the reading preferences and trends on the platform. The key features include:
 
-This repository contains a dataset of books with various attributes used for analysis and modeling purposes. Each entry in the dataset provides insights into different books, including their ratings, images, and unique identifiers from Goodreads.
+- `average_rating`: The average rating of each book.
+- `ratings_count`: The total number of ratings received.
+- `work_text_reviews_count`: Number of text reviews written for the book.
+- `ratings_1` to `ratings_5`: Breakdown of ratings from 1 to 5 stars.
 
-## Dataset Structure
+The dataset allows us to perform clustering and principal component analysis (PCA), enabling us to explore patterns and relationships between various book characteristics.
 
-The dataset consists of the following columns:
+## Analysis Performed
+### Clustering
+A clustering algorithm was applied to the dataset to group similar books based on their attributes, particularly focusing on `average_rating`, `ratings_count`, and other relevant features. The K-means algorithm was employed, and the optimal number of clusters was determined through the elbow method.
 
-- `book_id`: Unique identifier for the book in this dataset.
-- `goodreads_book_id`: ID assigned to the book on Goodreads.
-- `best_book_id`: Best book ID from Goodreads.
-- `work_id`: Unique identifier for the work associated with the book.
-- `ratings_4`: Number of four-star ratings received by the book.
-- `ratings_5`: Number of five-star ratings received by the book.
-- `image_url`: URL of the book's cover image.
-- `small_image_url`: URL of the book's smaller cover image.
-- Additional columns may include metadata related to authors, genres, publication year, etc. (not shown in sample).
+### Principal Component Analysis (PCA)
+PCA was conducted to reduce the dimensionality of the dataset while retaining the most variance. This analysis helps visualize the underlying structure of the data and identify which features contribute most to the variance.
 
-### Sample Data
+### Chi-squared Test
+A Chi-squared test was performed on categorical variables to determine if there are significant associations between different features such as `authors`, `language_code`, and `titles`.
 
-Here is a sample of the first five entries in the dataset:
+## Key Findings
+1. **Clustering Results**: The clustering analysis identified distinct groups of books based on their ratings and review counts, indicating differing audience engagement levels. The 2D representation of these clusters is shown below:
+   ![Clusters Image](./clusters_2d.png)
 
-| book_id     | goodreads_book_id | best_book_id  | work_id      | ratings_4  | ratings_5  | image_url                                             | small_image_url                                      |
-|-------------|--------------------|----------------|---------------|------------|------------|------------------------------------------------------|-----------------------------------------------------|
-| -1.731878   | -0.329718         | -0.345494      | -0.498142     | 28.41      | 33.63      | [Link](https://images.gr-assets.com/books/1447303603m...) | [Link](https://images.gr-assets.com/books/1447303603s...) |
-| -1.731531   | -0.695001         | -0.699023      | -0.340870     | 22.09      | 37.46      | [Link](https://images.gr-assets.com/books/1474154022m...) | [Link](https://images.gr-assets.com/books/1474154022s...) |
-| -1.731185   | -0.689475         | -0.693675      | -0.462443     | 16.62      | 16.69      | [Link](https://images.gr-assets.com/books/1361039443m...) | [Link](https://images.gr-assets.com/books/1361039443s...) |
-| -1.730838   | -0.694651         | -0.698684      | -0.457036     | 19.09      | 21.19      | [Link](https://images.gr-assets.com/books/1361975680m...) | [Link](https://images.gr-assets.com/books/1361975680s...) |
-| -1.730492   | -0.694385         | -0.698427      | -0.714923     | 17.81      | 11.58      | [Link](https://images.gr-assets.com/books/1490528560m...) | [Link](https://images.gr-assets.com/books/1490528560s...) |
+2. **Rating Correlations**: A correlation heatmap revealed strong positive correlations between the different star ratings (e.g. ratings_4, ratings_5) and overall ratings counts, indicating that books with higher average ratings tend to receive more reviews.
+   ![Correlation Heatmap](./correlation_heatmap.png)
 
-## Usage
+3. **Outlier Detection**: Analysis of outliers showed that certain features exhibit significant outlier percentages, especially in `ratings_count` and `work_text_reviews_count`, emphasizing the presence of popular books that receive an unusually high number of ratings.
 
-This dataset can be utilized for various purposes, including:
+4. **Significant Associations**: The Chi-squared test indicated a significant association between `authors` and `language_code`, hinting at language preferences among fans of specific authors. The high p-values in other associations suggest some features are independent of each other.
 
-- Analyzing book popularity based on ratings.
-- Building recommendation systems.
-- Exploring book imagery and metadata.
-- Conducting data visualization projects related to literature.
+## Conclusion
+The data analysis of the Goodreads dataset provided valuable insights into reader preferences, book ratings, and patterns in engaging literature. The clusters formed indicate varying levels of popularity and reader engagement, while the PCA helped visualize these trends clearly. Future work could involve deeper analysis into the factors influencing high ratings and engagement, as well as the exploration of temporal trends in book reviews.
 
-## Contributing
+For further inquiries or contributions, please feel free to reach out!
+``` 
 
-Contributions to enhance this dataset or improve its attributes are welcome. Please follow the standard pull request workflow for any changes.
-
-## License
-
-This dataset is provided free of charge for educational and research purposes. Please ensure proper citation if you use it in your work.
-
-## Contact
-
-For any questions or inquiries, please contact [Your Name] at [Your Email].
-
----
-
-Feel free to customize this README file as needed for your specific project requirements!
+**Note:** Ensure to replace or adapt the image links in the "Clusters Image" and "Correlation Heatmap" sections depending on their actual file paths or URLs in your repository.
