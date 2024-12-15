@@ -7,9 +7,10 @@
 #     "openai",
 #     "pandas",
 #     "python-dotenv",
+#     "seaborn",
 #     "requests",
 #     "scikit-learn",
-#     "seaborn",
+#     "statsmodels"
 # ]
 # ///
 import os
@@ -23,11 +24,16 @@ import requests
 import chardet
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
+from sklearn.feature_selection import VarianceThreshold
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.impute import SimpleImputer
 from dotenv import load_dotenv
+import scipy.stats as stats
+import statsmodels.formula.api as sm
+import random
+import json
 import base64
 import re
 
@@ -113,6 +119,41 @@ def get_descriptive_stats(df):
   """
   desc_stats = df.describe()
   return desc_stats
+
+"""# Do univariate Analysis"""
+
+def univariate_analysis(df):
+    """
+    Performs univariate analysis for a given variable.
+
+    Args:
+        df: The input DataFrame.
+        variable: The name of the variable to analyze.
+        plot_type: The type of plot to create ("hist", "box", "kde", "qq").
+    """
+    numeric_features = df.select_dtypes(include=np.number).columns.tolist()
+    data_reset = df.reset_index()
+    fig, axes = plt.subplots(1, len(numeric_features), figsize=(15, 6))
+    subsample_size = 5000
+    for variable in numeric_features:
+      # Descriptive statistics
+      print(f"Descriptive Statistics for {variable}:")
+      print(df[variable].describe())
+      # Check for normality (Shapiro-Wilk test with subsampling)
+      if len(df[variable]) > subsample_size:
+        subsample = random.sample(df[variable].tolist(), subsample_size)  # Take random subsample
+        _, p_value = stats.shapiro(subsample)
+        print(f"Shapiro-Wilk Test for Normality (subsampled, p-value): {p_value:.3f}")
+      else:
+        _, p_value = stats.shapiro(df[variable])
+        print(f"Shapiro-Wilk Test for Normality (p-value): {p_value:.3f}")
+    for i, column in enumerate(numeric_features):
+      melted_data = pd.melt(data_reset, id_vars=['index'], value_vars=[column], var_name='Column', value_name='Value')
+      sns.histplot(x ='Value', data=melted_data, ax=axes[i])
+      axes[i].set_title(f'histogram for {column}')
+      axes[i].set_ylabel('Value')
+
+    plt.tight_layout()
 
 """# Get the numeric and categorical columns for analysing the data"""
 
@@ -244,20 +285,12 @@ def get_LLMResponseForFeatures(df, column_info, summary_stats):
     """
 
     prompt = f"""
-    For data analysis, Identify features that can be dropped(ex. features that are not useful for predictive modeling or clustering with a brief explanation for each column).
+    Do Data analysis for data: {df.head(10)} having columns: {column_info} and summary statistics: {summary_stats}.
+    Identify features that can be dropped(ex. features that are not useful for predictive modeling or clustering).
     Identify features for one-hot encoding.
     Identify features for ordinal encoding.
-    Provide your response in JSON format with the following structure:
-    json {{ "drop_features": ["feature1", "feature2", ...], "onehot_features": ["feature3", "feature4", ...], "ordinal_features": ["feature5", "feature6", ...]
-
-    Column Information:
-    {column_info}
-
-    Summary Statistics:
-    {summary_stats}
-
-    Data Head:
-    {df.head()}
+    Provide only a JSON format response with the following structure:
+    {{ "drop_features": ["feature1", "feature2", ...], "onehot_features": ["feature3", "feature4", ...], "ordinal_features": ["feature5", "feature6", ...]}}
     """
 
     # Send the prompt to the LLM (using your preferred method, e.g., get_LLMResponse)
@@ -354,7 +387,6 @@ def apply_pca_with_variance(X_scaled, variance_threshold=0.90):
     # Apply PCA with the determined number of components
     pca = PCA(n_components=n_components)
     X_pca = pca.fit_transform(X_scaled)
-
     return pca, X_pca
 
 """# Preprocess data"""
@@ -395,6 +427,118 @@ def preprocess_data(df_data, numeric_features, categorical_features):
     df_data = pd.concat([df_data, encoded_df_data], axis=1)  # Concatenate encoded features
     print(df_data.shape)
     return df_data
+
+def imputeAndScale_NumericFeatures(df_data, numeric_features):
+    """
+    Imputes missing values, scales numerical features, and encodes categorical features.
+
+    Args:
+        df_data: The input DataFrame.
+        numeric_features: A list of numerical features to process.
+        categorical_features: A list of categorical features to process.
+
+    Returns:
+        A DataFrame with preprocessed features.
+    """
+    numeric_features = [col for col in numeric_features if col in df_data.columns]
+    num_imputer = SimpleImputer(strategy='mean')
+    df_data[numeric_features] = num_imputer.fit_transform(df_data[numeric_features])
+    scaler = StandardScaler()
+    df_data[numeric_features] = scaler.fit_transform(df_data[numeric_features])
+    print(df_data.shape)
+    return df_data
+
+def dropFeaturesFromDataFrame(df, features):
+    """Drops features
+
+    Args:
+        df: The input DataFrame.
+        response_json: JSON containing LLM's feature dropping suggestions.
+
+    Returns:
+        DataFrame with dropped features and imputed numerical features.
+    """
+    df = df.drop(columns=drop_features, errors='ignore')
+    return df
+
+def encodeWithOneHotEncoder(df, onehot_features):
+    """Encodes features and imputes missing values for categorical and ordinal features.
+
+    Args:
+        df: The input DataFrame.
+        response_json: JSON containing LLM's encoding suggestions.
+
+    Returns:
+        DataFrame with encoded and imputed features.
+    """
+    # Impute missing values before one-hot encoding
+    cat_imputer = SimpleImputer(strategy='most_frequent')  # You can change the strategy
+    df[onehot_features] = cat_imputer.fit_transform(df[onehot_features])
+    for col in df[onehot_features]:
+      if df[col].nunique() > 50:
+        print(f"Dropping column '{col}' due to more than 30 unique values.")
+        df = df.drop(columns=[col])
+    onehot_features = [col for col in onehot_features if col in df.columns]
+    encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+    encoded_data = encoder.fit_transform(df[onehot_features])
+    encoded_df = pd.DataFrame(encoded_data, columns=encoder.get_feature_names_out(onehot_features))
+    df = df.drop(columns=onehot_features, errors='ignore')
+    df = pd.concat([df, encoded_df], axis=1)
+    return df
+
+def encodeWithOridinalEncoder(df, ordinal_features):
+    """Encodes features and imputes missing values for categorical and ordinal features.
+
+    Args:
+        df: The input DataFrame.
+        response_json: JSON containing LLM's encoding suggestions.
+
+    Returns:
+        DataFrame with encoded and imputed features.
+    """
+    # Impute missing values before one-hot encoding
+    cat_imputer = SimpleImputer(strategy='most_frequent')  # You can change the strategy
+    df[ordinal_features] = cat_imputer.fit_transform(df[ordinal_features])
+    # Impute missing values before ordinal encoding
+    ord_imputer = SimpleImputer(strategy='most_frequent')  # You can change the strategy
+    df[ordinal_features] = ord_imputer.fit_transform(df[ordinal_features])
+
+    encoder = OrdinalEncoder()
+    df[ordinal_features] = encoder.fit_transform(df[ordinal_features])
+
+    return df
+
+"""# Chi2 test"""
+
+def chi2_test_for_features(df, categorical_features):
+    """
+    Performs Chi-squared test for independence between pairs of categorical features.
+
+    Args:
+        df: The input DataFrame.
+        categorical_features: A list of categorical feature columns.
+
+    Returns:
+        A dictionary containing Chi-squared statistics and p-values for each pair of features.
+    """
+    results = {}
+    for feature1 in categorical_features:
+        for feature2 in categorical_features:
+            if feature1 != feature2:  # Avoid comparing a feature to itself
+                # Create contingency table
+                contingency_table = pd.crosstab(df[feature1], df[feature2])
+
+                # Perform Chi-squared test
+                chi2_stat, p_value, dof, expected = stats.chi2_contingency(contingency_table)
+
+                # Store results
+                results[(feature1, feature2)] = {
+                    "chi2_statistic": chi2_stat,
+                    "p_value": p_value,
+                    "degrees_of_freedom": dof,
+                   # "expected_frequencies": expected
+                }
+    return results
 
 """# Generate cluster map in 2D"""
 
@@ -461,6 +605,22 @@ def generate_report(df, numeric_columns, file_path, response_json):
 
     print(f"Report generated in folder: {folder_path}")
 
+"""# Apply VarianceThreshold for feature selection"""
+
+from sklearn.feature_selection import VarianceThreshold
+
+def apply_variance_threshold(df, threshold=0.05):
+  selector = VarianceThreshold(threshold=0.01)  # Adjust threshold as needed
+  X_scaled_selected = selector.fit_transform(df)
+
+  # Get selected feature names
+  selected_features = [df.columns[i] for i in range(len(df.columns)) if selector.get_support()[i]]
+
+  # Create a new DataFrame with selected features
+  X_scaled_selected_df = pd.DataFrame(X_scaled_selected, columns=selected_features)
+  print('df_shape: ', df.shape,'X_scaled_selected_df.shape: ', X_scaled_selected_df.shape)
+  return X_scaled_selected_df
+
 """# Main Function"""
 
 ############ MAIN FUNCTION############
@@ -487,42 +647,95 @@ if __name__ == "__main__":
   print("Outlier Percentages:")
   for column, percentage in outlier_percentages.items():
     print(f"  {column}: {percentage:.2f}%")
-  X_scaled = preprocess_data(df, numeric_columns, categorical_columns)
-  n_component, X_pca = apply_pca_with_variance(X_scaled)
-  print(X_scaled.shape, n_component, X_pca.shape)
-  generate_elbow_chart(X_scaled)
-  prompt = "I have an elbow chart for KMeans clustering. Determine the optimal number of clusters (k) from chart.Return only optimal k as a dictionary variable"
-  response = get_LLMResponseForImage('elbow_chart.png', prompt)
-  # Extract the content from the response
-  content = response.json()['choices'][0]['message']['content']
 
-  # Use a regular expression to find the integer value of k
-  match = re.search(r'\d+', content)
-  # Let the optimal k value be 3 by default
-  optimal_k=3
-  if match:
-    optimal_k = int(match.group())
-    print(f"Optimal k: {optimal_k}")
-  clustered_df = identify_clusters(X_scaled,optimal_k )
-  generate_cluster_map(clustered_df)
-  file_name = file_path
-  df_info
-  column_info = df.dtypes.to_dict()  # Column names and types
-  summary_stats = df.describe().to_string()  # Summary statistics
-  outlier_percentages
-  corr_mat
-  cluster_image = plt.imread('clusters_2d.png')
-  prompt = f"""
-  Generate a README.md file that summarizes the data {df.head()}
-  """
-  # Send the prompt to the LLM (using your preferred method, e.g., get_LLMResponse)
-  response = get_LLMResponse(prompt)
-  if response:
-    try:
-        response_json = response.json()
-        generate_report(df, numeric_columns, file_path, response_json)
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON response: {e}")
+column_info = df.dtypes.to_dict()  # Column names and types
+summary_stats = df.describe().to_string()  # Summary statistics
+response = get_LLMResponseForFeatures(df, column_info, summary_stats)
+# Extract the content from the response
+
+content = response.json()['choices'][0]['message']['content']
+print(content)
+
+content = content.replace("```json", "").replace("```", "")
+try:
+    content = json.loads(content)
+except json.JSONDecodeError as e:
+    print(f"Error decoding JSON: {e}")
+    # Handle the error, e.g., exit or use default values
+    content = {}  # or some default value
+
+df_new = pd.DataFrame()
+drop_features = content.get("drop_features", [])
+if drop_features:
+  df_new_min = dropFeaturesFromDataFrame(df, drop_features)
+  df_new = df_new_min.copy()
 else:
-    print(f"Request failed with status code: {response.status_code}")
+  df_new = df
+onehot_features = content.get("onehot_features", [])
+if onehot_features:
+  df_new = encodeWithOneHotEncoder(df_new, onehot_features)
+else:
+  df_new = df_new
+ordinal_features = content.get("ordinal_features", [])
+if ordinal_features:
+  df_new = encodeWithOridinalEncoder(df_new, ordinal_features)
+else:
+  df_new = df_new
+# get categorical features from df
+cat_features = [col for col in df_new.columns if df_new[col].dtype == 'object']
+if cat_features:
+  df_new = encodeWithOneHotEncoder(df_new, cat_features)
+else:
+  df_new = df_new
 
+df_new_scaled = imputeAndScale_NumericFeatures(df_new, numeric_columns)
+
+# perform chi2 test if df_new_min has more than 1 categorical features
+
+categorical_columns = [col for col in df_new_min.columns if df_new_min[col].dtype == 'object']
+if len(categorical_columns) > 1:
+  chi2_feature_results = chi2_test_for_features(df_new_min, categorical_columns)
+  print("Chi-squared Test Results for Features:")
+  print(chi2_feature_results)
+else:
+  chi2_feature_results = 'Chi2 test could not be performed as no. of categorical variable is only one'
+
+# Apply variance threshold on the scaled dataframe
+X_scaled_selected_df = apply_variance_threshold(df_new_scaled)
+
+X_scaled_selected_df.head()
+
+
+
+generate_elbow_chart(X_scaled_selected_df)
+prompt = "I have an elbow chart for KMeans clustering. Determine the optimal number of clusters (k) from chart.Return only optimal k as a dictionary variable"
+response = get_LLMResponseForImage('elbow_chart.png', prompt)
+# Extract the content from the response
+content = response.json()['choices'][0]['message']['content']
+
+# Use a regular expression to find the integer value of k
+match = re.search(r'\d+', content)
+# Let the optimal k value be 3 by default
+optimal_k=3
+if match:
+  optimal_k = int(match.group())
+  print(f"Optimal k: {optimal_k}")
+clustered_df = identify_clusters(X_scaled_selected_df,optimal_k )
+generate_cluster_map(clustered_df)
+prompt = f"""
+Generate a README.md file that summarizes the data, analysis, and key findings from below data. The README.md should include a brief overview of the data, a description of the analysis performed (including clustering and PCA), and a summary of the key insights. Include the cluster image and correlation heatmap in the README.md file.
+**Filename: {file_path}
+**dataframe header: {df.head()}
+**Column Information: {column_info}
+**Summary Statistics: {summary_stats}
+**Outlier Percentages: {outlier_percentages}
+**Correlation Matrix: {corr_mat}
+**Cluster Image path(2D): {'./clusters_2d.png'}
+**Chi2 test results: {chi2_feature_results}
+Analyze the data and identify any significant findings or insights.
+"""
+
+# Send the prompt to the LLM (using your preferred method, e.g., get_LLMResponse)
+response = get_LLMResponse(prompt)
+print(json.dumps(response.json(), indent=4))
+generate_report(df, numeric_columns, file_path, response.json())
