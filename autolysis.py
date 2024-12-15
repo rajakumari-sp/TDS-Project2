@@ -42,6 +42,7 @@ load_dotenv()
 
 """# Read csv file and put the data into pandas DataFrame"""
 
+# Read csv file and put the data into pandas DataFrame
 def read_csv(file_path):
   """
   Function:
@@ -74,6 +75,7 @@ def read_csv(file_path):
 
 """# Check the number of rows, columns and missing values"""
 
+# Check the number of rows, columns and missing values
 def analyze_df(df):
   """
    Gets dataframe, analyzes its rows, columns, and missing values.
@@ -112,6 +114,7 @@ def analyze_df(df):
 
 """# Get the descriptive statistics for the numerical features in the dataframe"""
 
+# Get the descriptive statistics for the numerical features in the dataframe
 def get_descriptive_stats(df):
   """
   Function:
@@ -126,6 +129,7 @@ def get_descriptive_stats(df):
 
 """# Do univariate Analysis"""
 
+# Do univariate Analysis
 def univariate_analysis(df):
     """
     Performs univariate analysis for a given variable.
@@ -161,7 +165,7 @@ def univariate_analysis(df):
 
 """# Get the numeric and categorical columns for analysing the data"""
 
-#  Identifies numeric and categorical columns in a Pandas DataFrame ####
+#  Identifies numeric and categorical columns in a Pandas DataFrame
 def get_column_types(df):
   """
   Identifies numeric and categorical columns in a Pandas DataFrame.
@@ -176,12 +180,15 @@ def get_column_types(df):
 
 """# Generate correlation heatmap"""
 
+# Generate correlation heatmap
 def generate_correlation_heatmap(df, title="Correlation Heatmap"):
   """
   Generates a correlation heatmap for numerical variables in a Pandas DataFrame.
   Args:
     df: The input Pandas DataFrame.
     title: The title of the heatmap (default: "Correlation Heatmap").
+  Returns:
+    A correlation matrix.
   """
 
   # Select only numerical features for correlation analysis
@@ -199,6 +206,7 @@ def generate_correlation_heatmap(df, title="Correlation Heatmap"):
 
 """# Get the LLM response for given prompt"""
 
+# Get the LLM response for given prompt
 def get_LLMResponse(prompt):
   """
   Function:
@@ -228,11 +236,20 @@ def get_LLMResponse(prompt):
   else:
     exit(1)
 
+# Get the LLM response for given Image with prompt
 def get_LLMResponseForImage(Image, prompt):
+  """
+  Function:
+    Generates a response from LLM for the given Image with prompt.
+  Args:
+    Image: Image to be analyzed by LLM
+    prompt: the prompt to be sent to LLM
+  Returns:
+    response from LLM
+  """
   AIPROXY_TOKEN = os.getenv('AIPROXY_TOKEN')
   #AIPROXY_TOKEN = userdata.get('AIPROXY_TOKEN')
   API_URL = 'https://aiproxy.sanand.workers.dev/openai/v1/chat/completions'
-
 
   # Read the image file as binary data
   with open(Image, 'rb') as image_file:
@@ -275,6 +292,8 @@ def get_LLMResponseForImage(Image, prompt):
   else:
     exit(1)
 
+# prompts the LLM to suggest feature engineering strategies
+
 def get_LLMResponseForFeatures(df, column_info, summary_stats):
     """
     Prompts the LLM to suggest feature engineering strategies.
@@ -308,6 +327,8 @@ def get_LLMResponseForFeatures(df, column_info, summary_stats):
 
 """# Get Percentage of outliers in each column"""
 
+# Get Percentage of outliers in each column
+
 def get_outlier_percentage(df, column):
   """
   Function:
@@ -329,6 +350,7 @@ def get_outlier_percentage(df, column):
 
 """# Identify Clusters in the given dataset"""
 
+# To generate elbow chart to identify optimal K for clustering
 def generate_elbow_chart(X_scaled, k_range=(1, 11), filename="elbow_chart.png"):
     """
     Generates an elbow chart for KMeans clustering and saves it as an image.
@@ -354,14 +376,21 @@ def generate_elbow_chart(X_scaled, k_range=(1, 11), filename="elbow_chart.png"):
     plt.savefig(filename, dpi=64, bbox_inches='tight', pad_inches=0.5)  # Adjust dpi and padding as needed
     plt.show()
 
+# Identify Clusters in the given dataset
 def identify_clusters(X_scaled, k=3):
     """
     Identifies clusters in a DataFrame using KMeans clustering.
+    Args:
+        X_scaled: Scaled data for clustering.
+        k: Number of clusters (default: 3).
+    Returns:
+        A DataFrame with cluster labels.
     """
     kmeans = KMeans(n_clusters=k, random_state=42)
     X_scaled['cluster'] = kmeans.fit_predict(X_scaled)
     return X_scaled
 
+# Applies PCA to scaled data and retains components explaining a specified variance threshold.
 def apply_pca_with_variance(X_scaled, variance_threshold=0.90):
     """
     Applies PCA to scaled data and retains components explaining a specified variance threshold.
@@ -395,6 +424,7 @@ def apply_pca_with_variance(X_scaled, variance_threshold=0.90):
 
 """# Preprocess data"""
 
+# Imputes missing values, scales numerical features, and encodes categorical features.
 def preprocess_data(df_data, numeric_features, categorical_features):
     """
     Imputes missing values, scales numerical features, and encodes categorical features.
@@ -432,6 +462,7 @@ def preprocess_data(df_data, numeric_features, categorical_features):
     print(df_data.shape)
     return df_data
 
+# Imputes missing values, scales numerical features, and encodes categorical features.
 def imputeAndScale_NumericFeatures(df_data, numeric_features):
     """
     Imputes missing values, scales numerical features, and encodes categorical features.
@@ -452,8 +483,10 @@ def imputeAndScale_NumericFeatures(df_data, numeric_features):
     print(df_data.shape)
     return df_data
 
+# Drops given features from dataframe
 def dropFeaturesFromDataFrame(df, features):
-    """Drops features
+    """
+    Drops given features from dataframe
 
     Args:
         df: The input DataFrame.
@@ -465,8 +498,10 @@ def dropFeaturesFromDataFrame(df, features):
     df = df.drop(columns=drop_features, errors='ignore')
     return df
 
+# Encodes features and imputes missing values for categorical and ordinal features.
 def encodeWithOneHotEncoder(df, onehot_features):
-    """Encodes features and imputes missing values for categorical and ordinal features.
+    """
+    Encodes features and imputes missing values for categorical and ordinal features.
 
     Args:
         df: The input DataFrame.
@@ -490,8 +525,10 @@ def encodeWithOneHotEncoder(df, onehot_features):
     df = pd.concat([df, encoded_df], axis=1)
     return df
 
+# Encodes features and imputes missing values for categorical and ordinal features.
 def encodeWithOridinalEncoder(df, ordinal_features):
-    """Encodes features and imputes missing values for categorical and ordinal features.
+    """
+    Encodes features and imputes missing values for categorical and ordinal features.
 
     Args:
         df: The input DataFrame.
@@ -514,6 +551,7 @@ def encodeWithOridinalEncoder(df, ordinal_features):
 
 """# Chi2 test"""
 
+# Performs Chi-squared test for independence between pairs of categorical features.
 def chi2_test_for_features(df, categorical_features):
     """
     Performs Chi-squared test for independence between pairs of categorical features.
@@ -546,8 +584,17 @@ def chi2_test_for_features(df, categorical_features):
 
 """# Generate cluster map in 2D"""
 
-# Apply PCA to reduce dimensionality to 2
+# Apply PCA to reduce dimensionality to 2 and generate cluster map
 def generate_cluster_map(X_scaled):
+    """
+    Applies PCA to reduce dimensionality to 2 and generates a cluster map.
+
+    Args:
+        X_scaled: Scaled data for clustering.
+
+    Returns:
+        A DataFrame with cluster labels and PCA coordinates.
+    """
     pca = PCA(n_components=2)
     X_pca = pca.fit_transform(X_scaled)
 
@@ -564,13 +611,21 @@ def generate_cluster_map(X_scaled):
 
 """# Copy the files to correct directory"""
 
+# Copy the files to correct directory
 def copy_file(source_path, destination_path):
-       """Copies a file using lower-level file I/O."""
-       with open(source_path, 'rb') as source_file, open(destination_path, 'wb') as destination_file:
-           destination_file.write(source_file.read())
+    """
+    Copies a file from the source path to the destination path.
 
-"""# Generate the mardown file from the response got from LLM"""
+    Args:
+        source_path: Path to the source file.
+        destination_path: Path to the destination file.
+    """
+    with open(source_path, 'rb') as source_file, open(destination_path, 'wb') as destination_file:
+      destination_file.write(source_file.read())
 
+"""# Generate the markdown file from the response got from LLM"""
+
+# Generate the markdown file from the response got from LLM
 def generate_report(df, numeric_columns, file_path, response_json):
     """
     Generates a report folder with README.md and cluster image.
@@ -601,7 +656,7 @@ def generate_report(df, numeric_columns, file_path, response_json):
         markdown_content = response_json['choices'][0]['message']['content']
         readme_path = os.path.join(folder_path, 'README.md')
         # Add image to README.md
-        markdown_content = markdown_content.replace("```mardown","")
+        markdown_content = markdown_content.replace("```markdown","")
         markdown_content = markdown_content.replace("```", "")
         with open("heatmap.png", "rb") as image_file:
           encoded_string = base64.b64encode(image_file.read()).decode()
@@ -621,9 +676,18 @@ def generate_report(df, numeric_columns, file_path, response_json):
 
 """# Apply VarianceThreshold for feature selection"""
 
-from sklearn.feature_selection import VarianceThreshold
-
+# Apply VarianceThreshold for feature selection
 def apply_variance_threshold(df, threshold=0.05):
+  """
+  Applies VarianceThreshold for feature selection.
+
+  Args:
+      df: The input DataFrame.
+      threshold: Variance threshold (default: 0.05).
+
+  Returns:
+      A DataFrame with selected features.
+  """
   selector = VarianceThreshold(threshold=0.01)  # Adjust threshold as needed
   X_scaled_selected = selector.fit_transform(df)
 
@@ -661,94 +725,80 @@ if __name__ == "__main__":
   print("Outlier Percentages:")
   for column, percentage in outlier_percentages.items():
     print(f"  {column}: {percentage:.2f}%")
+  column_info = df.dtypes.to_dict()  # Column names and types
+  summary_stats = df.describe().to_string()  # Summary statistics
+  response = get_LLMResponseForFeatures(df, column_info, summary_stats)
+  # Extract the content from the response
+  content = response.json()['choices'][0]['message']['content']
+  print(content)
+  content = content.replace("```json", "").replace("```", "")
+  try:
+      content = json.loads(content)
+  except json.JSONDecodeError as e:
+      print(f"Error decoding JSON: {e}")
+      # Handle the error, e.g., exit or use default values
+      content = {}  # or some default value
+  df_new = pd.DataFrame()
+  drop_features = content.get("drop_features", [])
+  if drop_features:
+    df_new_min = dropFeaturesFromDataFrame(df, drop_features)
+    df_new = df_new_min.copy()
+  else:
+    df_new = df
+  onehot_features = content.get("onehot_features", [])
+  if onehot_features:
+    df_new = encodeWithOneHotEncoder(df_new, onehot_features)
+  else:
+    df_new = df_new
+  ordinal_features = content.get("ordinal_features", [])
+  if ordinal_features:
+    df_new = encodeWithOridinalEncoder(df_new, ordinal_features)
+  else:
+    df_new = df_new
+  # get categorical features from df
+  cat_features = [col for col in df_new.columns if df_new[col].dtype == 'object']
+  if cat_features:
+    df_new = encodeWithOneHotEncoder(df_new, cat_features)
+  else:
+    df_new = df_new
+  df_new_scaled = imputeAndScale_NumericFeatures(df_new, numeric_columns)
+  # perform chi2 test if df_new_min has more than 1 categorical features
 
-column_info = df.dtypes.to_dict()  # Column names and types
-summary_stats = df.describe().to_string()  # Summary statistics
-response = get_LLMResponseForFeatures(df, column_info, summary_stats)
-# Extract the content from the response
+  categorical_columns = [col for col in df_new_min.columns if df_new_min[col].dtype == 'object']
+  if len(categorical_columns) > 1:
+    chi2_feature_results = chi2_test_for_features(df_new_min, categorical_columns)
+    print("Chi-squared Test Results for Features:")
+    print(chi2_feature_results)
+  else:
+    chi2_feature_results = 'Chi2 test could not be performed as no. of categorical variable is only one'
+  # Apply variance threshold on the scaled dataframe
+  X_scaled_selected_df = apply_variance_threshold(df_new_scaled)
+  generate_elbow_chart(X_scaled_selected_df)
+  prompt = "I have an elbow chart for KMeans clustering. Determine the optimal number of clusters (k) from chart.Return only optimal k as a dictionary variable"
+  response = get_LLMResponseForImage('elbow_chart.png', prompt)
+  # Extract the content from the response
+  content = response.json()['choices'][0]['message']['content']
 
-content = response.json()['choices'][0]['message']['content']
-print(content)
+  # Use a regular expression to find the integer value of k
+  match = re.search(r'\d+', content)
+  # Let the optimal k value be 3 by default
+  optimal_k=3
+  if match:
+    optimal_k = int(match.group())
+    print(f"Optimal k: {optimal_k}")
+  clustered_df = identify_clusters(X_scaled_selected_df,optimal_k )
+  generate_cluster_map(clustered_df)
+  prompt = f"""
+  Generate a README.md that has analysis of data. It should have heading ```Data Analysis Report for file name: {file_path}.
+  1st header should be 'Introduction' which should include objectives like: basic information about the data, and what could be modeled from the data.
+  2nd header should be 'Dataset Overview'. This should include Filename,number of samples, number of features. this information can be got from filename:{file_path} and data info:{df_info}.
+  3rd header should be 'Data Description'. This should include each column with data type, number of uniqe values, percentage of missing values and description of each feature as a table. This can be got from data info, column_info:{column_info} and summary_stats:{summary_stats}.
+  4th header should be 'Data Quality'. This should have give the columns having significant missing values and significant percent of outlier. percentage of outliers can be got from outlier_percentage:{outlier_percentages}. Give the inference from chi2 test from chi2_feature_results:{chi2_feature_results}.
+  5th header should be 'Data Visualization'. Here show the image cluster: clusters_2d.png and correlation heatmap: heatmap.png
+  7th header should be 'Data Processing Steps'. Here explain that Data processing steps like Imputations, onehotencoding, ordinal encoding, scaling and PCA has been used.
+  8th header should be 'Key Insights and Next Steps'. Here write your key insights and next steps and suggestions.
+  """
 
-content = content.replace("```json", "").replace("```", "")
-try:
-    content = json.loads(content)
-except json.JSONDecodeError as e:
-    print(f"Error decoding JSON: {e}")
-    # Handle the error, e.g., exit or use default values
-    content = {}  # or some default value
-
-df_new = pd.DataFrame()
-drop_features = content.get("drop_features", [])
-if drop_features:
-  df_new_min = dropFeaturesFromDataFrame(df, drop_features)
-  df_new = df_new_min.copy()
-else:
-  df_new = df
-onehot_features = content.get("onehot_features", [])
-if onehot_features:
-  df_new = encodeWithOneHotEncoder(df_new, onehot_features)
-else:
-  df_new = df_new
-ordinal_features = content.get("ordinal_features", [])
-if ordinal_features:
-  df_new = encodeWithOridinalEncoder(df_new, ordinal_features)
-else:
-  df_new = df_new
-# get categorical features from df
-cat_features = [col for col in df_new.columns if df_new[col].dtype == 'object']
-if cat_features:
-  df_new = encodeWithOneHotEncoder(df_new, cat_features)
-else:
-  df_new = df_new
-
-df_new_scaled = imputeAndScale_NumericFeatures(df_new, numeric_columns)
-
-# perform chi2 test if df_new_min has more than 1 categorical features
-
-categorical_columns = [col for col in df_new_min.columns if df_new_min[col].dtype == 'object']
-if len(categorical_columns) > 1:
-  chi2_feature_results = chi2_test_for_features(df_new_min, categorical_columns)
-  print("Chi-squared Test Results for Features:")
-  print(chi2_feature_results)
-else:
-  chi2_feature_results = 'Chi2 test could not be performed as no. of categorical variable is only one'
-
-# Apply variance threshold on the scaled dataframe
-X_scaled_selected_df = apply_variance_threshold(df_new_scaled)
-
-X_scaled_selected_df.head()
-
-
-
-generate_elbow_chart(X_scaled_selected_df)
-prompt = "I have an elbow chart for KMeans clustering. Determine the optimal number of clusters (k) from chart.Return only optimal k as a dictionary variable"
-response = get_LLMResponseForImage('elbow_chart.png', prompt)
-# Extract the content from the response
-content = response.json()['choices'][0]['message']['content']
-
-# Use a regular expression to find the integer value of k
-match = re.search(r'\d+', content)
-# Let the optimal k value be 3 by default
-optimal_k=3
-if match:
-  optimal_k = int(match.group())
-  print(f"Optimal k: {optimal_k}")
-clustered_df = identify_clusters(X_scaled_selected_df,optimal_k )
-generate_cluster_map(clustered_df)
-
-prompt = f"""
-Generate a README.md that has analysis of data. It should have heading ```Data Analysis Report for file name: {file_path}.
-1st header should be 'Introduction' which should include objectives like: basic information about the data, and what could be modeled from the data.
-2nd header should be 'Dataset Overview'. This should include Filename,number of samples, number of features. this information can be got from filename:{file_path} and data info:{df_info}.
-3rd header should be 'Data Description'. This should include each column with data type, number of uniqe values, percentage of missing values and description of each feature as a table. This can be got from data info, column_info:{column_info} and summary_stats:{summary_stats}.
-4th header should be 'Data Quality'. This should have give the columns having significant missing values and significant percent of outlier. percentage of outliers can be got from outlier_percentage:{outlier_percentages}.  Give the inference from chi2 test from chi2_feature_results:{chi2_feature_results}.
-5th header should be 'Data Visualization'. Here show the image cluster: clusters_2d.png and correlation heatmap: heatmap.png
-7th header should be 'Data Processing Steps'. Here explain that Data processing steps like Imputations, onehotencoding, ordinal encoding, scaling and PCA has been used.
-8th header should be 'Key Insights and Next Steps'. Here write your key insights and next steps and suggestions.
-"""
-
-# Send the prompt to the LLM (using your preferred method, e.g., get_LLMResponse)
-response = get_LLMResponse(prompt)
-#print(json.dumps(response.json(), indent=4))
-generate_report(df, numeric_columns, file_path, response.json())
+  # Send the prompt to the LLM (using your preferred method, e.g., get_LLMResponse)
+  response = get_LLMResponse(prompt)
+  generate_report(df, numeric_columns, file_path, response.json())
